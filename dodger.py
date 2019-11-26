@@ -92,34 +92,16 @@ def main_menu():
       screen.fill(BLACK)
 
       title_render = title_font.render('DODGER', True, WHITE)
-      play_render = font.render('PLAY', True, WHITE)
-      leaderboard_render = font.render('LEADERBOARD', True, WHITE)
-      credits_render = font.render('CREDITS', True, WHITE)
-      quit_render = font.render('QUIT', True, WHITE)
-
-      if selection == 1:
-          play_render = font.render('PLAY', True, RED)
-      elif selection == 2:
-          leaderboard_render = font.render('LEADERBOARD', True, RED)
-      elif selection == 3:
-          credits_render = font.render('CREDITS', True, RED)
-      elif selection == 4:
-          quit_render = font.render('QUIT', True, RED)
-
-      x = WIDTH/2 - title_render.get_width()/2
-      screen.blit(title_render, (x, 120))
-
-      x = WIDTH/2 - play_render.get_width()/2
-      screen.blit(play_render, (x, 240))
-
-      x = WIDTH/2 - leaderboard_render.get_width()/2
-      screen.blit(leaderboard_render, (x, 280))
-
-      x = WIDTH/2 - credits_render.get_width()/2
-      screen.blit(credits_render, (x, 320))
-
-      x = WIDTH/2 - quit_render.get_width()/2
-      screen.blit(quit_render, (x, 360))
+      screen.blit(title_render, (WIDTH/2 - title_render.get_width()/2, 120))
+  
+      line_text = ['PLAY', 'LEADERBOARD', 'CREDITS', 'QUIT']
+      y = 240
+      for line in line_text:
+        render = font.render(line, True, WHITE)
+        if line_text.index(line) + 1 == selection:
+          render = font.render(line, True, RED)
+        screen.blit(render, (WIDTH/2 - render.get_width()/2, y))
+        y += 40
 
       # Load
       pygame.display.flip()
