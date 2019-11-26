@@ -21,17 +21,67 @@ clock = pygame.time.Clock()
 
 #------------ COLORS ------------#
 BLACK = (0, 0, 0)
+GRAY = (128, 128, 128)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
-GRAY = (128, 128, 128)
 
 #------------ FUNCTIONS ------------#
+def game_over():
+  global game_state, player_score, player_name, leaderboard_names, leaderboard_scores
+  game_state = 'dead'
+
+  # update scores
+  index = 0
+  for score in leaderboard_scores:
+    if player_score > score:
+      leaderboard_scores.insert(index, player_score)
+      leaderboard_names.insert(index, player_name)
+      leaderboard_scores.pop()
+      leaderboard_names.pop()
+    index += 1
+  save_leaderboard()
+
+def load_leaderboard():
+  global leaderboard_names, leaderboard_scores
+  file = 'leaderboard.txt'
+
+  with open(file) as f:
+    line = f.readline()
+    while line:
+      line = line.strip().split()
+      leader = line[0]
+      score = int(line[1])
+      leaderboard_names.append(leader)
+      leaderboard_scores.append(score)
+      line = f.readline()
+
+def save_leaderboard():
+  global leaderboard_names, leaderboard_scores
+  file = open('leaderboard.txt', 'w')
+
+  for i in range(len(leaderboard_names)):
+    text = f"{leaderboard_names[i]} {leaderboard_scores[i]}\n"
+    file.write(text)
+  file.close()
+
 def spawn_enemy():
   enemy = Enemy()
   enemy.x = random.randint(0, 480 - enemy.width)
   enemy_list.append(enemy)
+
+def draw_score():
+  global player_score, game_state
+  font = pygame.font.Font('PressStart2P.ttf', 14)
+  render = font.render('Score = 0', True, WHITE)
+  render2 = font.render('Play again? Press enter.', True, WHITE)
+  render = font.render('Score = ' + str(player_score), True, WHITE)
+  
+  screen.blit(render, (10, 420))
+
+  if game_state == 'dead':
+    screen.blit(render2, (10, 450))
 
 def main_menu():
   global game_state, enemy_list, score, speed
@@ -59,16 +109,19 @@ def main_menu():
                 speed = 0
                 in_menu = False
                 return
+
               elif selection == 2:
                 print('leaderboard')
                 in_menu = False
                 leaderboard()
                 return
+
               elif selection == 3:
                 print('credits')
                 in_menu = False
                 credits()
                 return
+
               elif selection == 4:
                 print('quit')
                 pygame.quit()
@@ -304,6 +357,7 @@ class Player():
   def is_collided_with(self, enemy_list):
     for enemy in enemy_list:
       if self.rect.colliderect(enemy.rect):
+        print('collision')
         return True
     return False
 
@@ -337,19 +391,23 @@ class Enemy():
 
 #------------ OBJECTS ------------#
 player = Player()
+player_score = 0
+player_name = 'placeholder'
+
 enemy = Enemy()
 enemy_list = []
-
+enemy_spawn_time = 1000
+timer_check = False
 event_id = pygame.USEREVENT + 1
-pygame.time.set_timer(event_id, 1000)
+pygame.time.set_timer(event_id, enemy_spawn_time)
 
 game_state = 'playing'
-score = 0
-speed = 0
 
-font = pygame.font.Font('PressStart2P.ttf', 14)
-render = font.render('Score = 0', True, WHITE)
-render2 = font.render('Play again? Press enter.', True, WHITE)
+leaderboard_names = []
+leaderboard_scores = []
+load_leaderboard()
+print(f"leaderboard_names: {leaderboard_names}")
+print(f"leaderboard_scores: {leaderboard_scores}")
 
 main_menu()
 
@@ -412,23 +470,24 @@ while True:
 
   # Update
   if game_state == "playing":
-    if score > 10 and speed == 0:
-      pygame.time.set_timer(event_id, 500)
-      speed = 1
-    if score > 20 and speed == 1:
-      pygame.time.set_timer(event_id, 250)
-      speed = 2
+    
+    if player_score % 5 == 0 and timer_check == True:
+      if enemy_spawn_time >= 100:
+        enemy_spawn_time -= 50
+      pygame.time.set_timer(event_id, enemy_spawn_time)
+      print(f'enemy_spawn_time: {enemy_spawn_time}')
+      timer_check = False
 
     if player.is_collided_with(enemy_list):
-      print('collision')
-      game_state = 'dead'
+      game_over()
     else:
       player.update()
       for enemy in enemy_list:
         enemy.update()
         if enemy.y > 400 - enemy.width:
           enemy_list.remove(enemy)
-          score += 1
+          player_score += 1
+          timer_check = True
 
   # Draw
   screen.fill(BLACK)
@@ -436,11 +495,7 @@ while True:
   player.draw()
   for enemy in enemy_list:
     enemy.draw()
-  render = font.render('Score = ' + str(score), True, WHITE)
-  screen.blit(render, (10, 420))
-
-  if game_state == 'dead':
-    screen.blit(render2, (10, 450))
+  draw_score()
 
   # Load
   pygame.display.flip()
