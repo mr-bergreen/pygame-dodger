@@ -40,6 +40,7 @@ def game_over():
       leaderboard_names.insert(index, player_name)
       leaderboard_scores.pop()
       leaderboard_names.pop()
+      break
     index += 1
   save_leaderboard()
 
@@ -438,8 +439,8 @@ while True:
             print('restart')
             game_state = 'playing'
             enemy_list = []
-            score = 0
-            speed = 0
+            player_score = 0
+            enemy_spawn_time = 1000
 
     if event.type == pygame.KEYDOWN:
       if event.key == pygame.K_LEFT or event.key == pygame.K_a:
@@ -453,8 +454,8 @@ while True:
           print('restart')
           game_state = 'playing'
           enemy_list = []
-          score = 0
-          speed = 0
+          player_score = 0
+          enemy_spawn_time = 1000
       if event.key == pygame.K_ESCAPE:
         print('pause')
         pause()
@@ -472,7 +473,7 @@ while True:
   if game_state == "playing":
     
     if player_score % 5 == 0 and timer_check == True:
-      if enemy_spawn_time >= 100:
+      if enemy_spawn_time >= 150:
         enemy_spawn_time -= 50
       pygame.time.set_timer(event_id, enemy_spawn_time)
       print(f'enemy_spawn_time: {enemy_spawn_time}')
