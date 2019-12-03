@@ -28,21 +28,140 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
 #------------ FUNCTIONS ------------#
+def name_input():
+  global player_name
+  title_font = pygame.font.Font('PressStart2P.ttf', 28)
+  font = pygame.font.Font('PressStart2P.ttf', 24)
+  selection = 0
+  in_menu = True
+
+  title_render = title_font.render('NEW HIGH SCORE', True, WHITE)
+  screen.blit(title_render, (WIDTH/2 - title_render.get_width()/2, 120))
+
+  letters = ('abcdefghijklmnopqrstuvwxyz')
+  name = ""
+  name_index = 0
+
+  while in_menu:
+
+      # Event Loop
+      for event in pygame.event.get():
+        if event.type == QUIT:
+          pygame.quit()
+          sys.exit()
+
+        if event.type == pygame.KEYDOWN:
+          if event.key == pygame.K_RETURN:
+              print('enter pressed')
+              if selection == 27:
+                player_name = name
+                in_menu = False
+                return
+              else:
+                if len(name) < 8:
+                  name += letters[selection]
+
+          if event.key == pygame.K_DOWN:
+            print('down pressed')
+            if selection < 17:
+              selection += 9
+            else:
+              selection = 27
+
+          if event.key == pygame.K_UP:
+            print('up pressed')
+            if selection > 8:
+              selection -= 9
+            elif selection == 27:
+              selection = 26
+
+          if event.key == pygame.K_RIGHT:
+            print('right pressed')
+            if selection < 25 and selection not in [8, 17, 27]:
+              selection += 1
+
+          if event.key == pygame.K_LEFT:
+            print('left pressed')
+            if selection > 0 and selection not in [9, 18, 27]:
+              selection -= 1
+          
+      # Update
+      line_text = ""
+
+      for i in range(len(name)):
+        line_text += name[i]
+        if i != 7:
+          line_text += " "
+
+      if len(line_text) < 15:
+        if selection < 26:
+          line_text += letters[selection] + " "
+
+      while len(line_text) < 16:
+        if len(line_text) != 15:
+          line_text += "_"
+        if len(line_text) != 16:
+          line_text += " "
+
+      lines_render = font.render(line_text, True, WHITE)
+      
+      letter_renders = []
+      for i in range(len(letters)):
+        if i == selection:
+          render = font.render(letters[i], True, RED)
+        else:
+          render = font.render(letters[i], True, WHITE)
+        letter_renders.append(render)
+      
+      submit_render = font.render('SUBMIT', True, WHITE)
+      if selection == 27:
+        submit_render = font.render('SUBMIT', True, RED)
+
+      # Draw
+      screen.fill(BLACK)
+  
+      screen.blit(title_render, (WIDTH/2 - title_render.get_width()/2, 50))
+      screen.blit(lines_render, (WIDTH/2 - lines_render.get_width()/2, 125))
+
+      count = 0
+      x_offset = 50
+      y_offset = 225
+      for render in letter_renders:
+        screen.blit(render, (x_offset, y_offset))
+        count += 1
+        x_offset += render.get_width() + 20
+        if count % 9 == 0:
+          x_offset = 50
+          y_offset += render.get_height() + 20
+          count = 0
+
+      screen.blit(submit_render, (300, 400))
+
+      # Load
+      pygame.display.flip()
+      clock.tick(60)
+
 def game_over():
   global game_state, player_score, player_name, leaderboard_names, leaderboard_scores
   game_state = 'dead'
+  new_record = False
 
   # update scores
   index = 0
   for score in leaderboard_scores:
     if player_score > score:
+      name_input()
       leaderboard_scores.insert(index, player_score)
       leaderboard_names.insert(index, player_name)
       leaderboard_scores.pop()
       leaderboard_names.pop()
+      new_record = True
       break
     index += 1
+
   save_leaderboard()
+  if new_record:
+    leaderboard()
 
 def load_leaderboard():
   global leaderboard_names, leaderboard_scores
@@ -85,7 +204,7 @@ def draw_score():
     screen.blit(render2, (10, 450))
 
 def main_menu():
-  global game_state, enemy_list, score, speed
+  global game_state, enemy_list, player_score
   title_font = pygame.font.Font('PressStart2P.ttf', 36)
   font = pygame.font.Font('PressStart2P.ttf', 24)
   selection = 1
@@ -106,8 +225,7 @@ def main_menu():
                 print('play')
                 game_state = 'playing'
                 enemy_list = []
-                score = 0
-                speed = 0
+                player_score = 0
                 in_menu = False
                 return
 
@@ -393,7 +511,7 @@ class Enemy():
 #------------ OBJECTS ------------#
 player = Player()
 player_score = 0
-player_name = 'placeholder'
+player_name = ''
 
 enemy = Enemy()
 enemy_list = []
@@ -410,9 +528,10 @@ load_leaderboard()
 print(f"leaderboard_names: {leaderboard_names}")
 print(f"leaderboard_scores: {leaderboard_scores}")
 
+#------------ Game Loop ------------#
+
 main_menu()
 
-#------------ Game Loop ------------#
 while True:
   
   # Event Loop
